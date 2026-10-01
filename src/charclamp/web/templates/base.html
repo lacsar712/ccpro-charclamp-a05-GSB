@@ -10,12 +10,18 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="brand-block">
-        <span class="ember"></span>
-        <div>
-          <strong>CharClamp</strong>
-          <small>{% block site_label %}乌石岗焖烧坞{% endblock %}</small>
+      <div class="topbar-left">
+        <div class="brand-block">
+          <span class="ember"></span>
+          <div>
+            <strong>CharClamp</strong>
+            <small>{% block site_label %}乌石岗焖烧坞{% endblock %}</small>
+          </div>
         </div>
+        <nav class="topbar-nav" aria-label="主导航">
+          <a href="/" class="nav-link">焖烧时间轴</a>
+          <a href="/certificates" class="nav-link">窑膛容积证</a>
+        </nav>
       </div>
       <div class="topbar-actions">
         {% block top_actions %}{% endblock %}

@@ -5,17 +5,27 @@
   </header>
   <form class="drawer-body" method="post" action="/shifts/new">
     <label>炭窑
-      <select name="clamp_id" required>
+      <select name="clamp_id" id="shift-clamp-select" required>
         {% for clamp in clamps %}
-        <option value="{{ clamp.id }}" {% if preselect_clamp_id == clamp.id %}selected{% endif %}>{{ clamp.code }}</option>
+        {% set c = cert_by_clamp.get(clamp.id) %}
+        <option
+          value="{{ clamp.id }}"
+          {% if preselect_clamp_id == clamp.id %}selected{% endif %}
+          data-has-cert="{{ '1' if c else '0' }}"
+          {% if c %}data-volume="{{ '%.0f'|format(c.volume_m3) }}" data-limit="{{ '%.0f'|format(c.temp_limit_c) }}"{% endif %}
+        >{{ clamp.code }}</option>
         {% endfor %}
       </select>
     </label>
+
+    <p class="hint cert-info" id="shift-cert-info" aria-live="polite"></p>
+    <span id="shift-no-cert-msg" hidden>{{ no_cert_msg }}</span>
+
     <label>开始时间
       <input name="started_at" type="datetime-local" />
     </label>
     <label>峰值温度 ℃（可空）
-      <input name="peak_temp_c" type="number" step="0.1" />
+      <input name="peak_temp_c" id="shift-peak-input" type="number" step="0.1" />
     </label>
     <label>炭品等级
       <input name="charcoal_grade" value="B" />
@@ -23,10 +33,33 @@
     <label>备注
       <textarea name="notes" rows="3"></textarea>
     </label>
-    <p class="hint">出炭要求最近班次峰值 ≥ 400℃；本表只登记班次。</p>
+    <p class="hint">出炭要求最近班次峰值 ≥ 400℃；峰值须先有现行容积证且不超证面上限，无证请先到「窑膛容积证」办证。</p>
     <div class="actions">
       <button type="submit">写入时间轴</button>
       <button type="button" class="btn ghost" onclick="closeDrawer()">取消</button>
     </div>
   </form>
+  <script>
+    (function () {
+      var sel = document.getElementById('shift-clamp-select');
+      var info = document.getElementById('shift-cert-info');
+      var peak = document.getElementById('shift-peak-input');
+      function refresh() {
+        var opt = sel.options[sel.selectedIndex];
+        if (!opt) { return; }
+        if (opt.dataset.hasCert === '1') {
+          var limit = opt.dataset.limit;
+          info.classList.remove('warn');
+          info.textContent = '现行容积证：' + opt.dataset.volume + ' 立方米，峰值温度上限 ' + limit + '℃';
+          peak.setAttribute('max', limit);
+        } else {
+          info.classList.add('warn');
+          info.textContent = document.getElementById('shift-no-cert-msg').textContent;
+          peak.removeAttribute('max');
+        }
+      }
+      sel.addEventListener('change', refresh);
+      refresh();
+    })();
+  </script>
 </aside>

@@ -30,6 +30,15 @@
           <span>窑态</span>
           <strong class="badge badge-{{ shift.clamp.status }}">{{ status_labels.get(shift.clamp.status, shift.clamp.status) }}</strong>
         </div>
+        <div class="metric metric-action">
+          <button
+            type="button"
+            class="btn ghost btn-sm"
+            hx-get="/drawer/peak/{{ shift.id }}"
+            hx-target="#drawer-root"
+            hx-swap="innerHTML"
+          >保存峰值</button>
+        </div>
       </div>
       {% if shift.notes %}
       <p class="timeline-note">{{ shift.notes }}</p>

@@ -2,9 +2,30 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from charclamp.domain.models import BurnShift, Clamp, Site, User, utcnow
+from charclamp.domain.models import BurnShift, Clamp, Site, User, VolumeCertificate, utcnow
 from charclamp.infra.db import SyncSessionLocal
 from charclamp.infra.security import hash_password
+
+
+def _backfill_certificates(session) -> None:
+    """旧库升级：证件表为空时补齐演示容积证（仅一次，幂等）。"""
+    if session.query(VolumeCertificate).first():
+        return
+    by_code = {c.code: c for c in session.query(Clamp).all()}
+    today = utcnow().date()
+    certs = []
+    if (c2 := by_code.get("坞东-乙")) is not None:
+        certs.append(
+            VolumeCertificate(clamp=c2, volume_m3=6.0, temp_limit_c=390.0,
+                              effective_date=today, issued_by="admin")
+        )
+    if (c3 := by_code.get("河沿-丙")) is not None:
+        certs.append(
+            VolumeCertificate(clamp=c3, volume_m3=20.0, temp_limit_c=600.0,
+                              effective_date=today, issued_by="admin")
+        )
+    # 坞东-甲 故意保持无证。
+    session.add_all(certs)
 
 
 def seed_demo() -> None:
@@ -26,6 +47,7 @@ def seed_demo() -> None:
             worker.role = "worker"
 
         if session.query(Site).first():
+            _backfill_certificates(session)
             session.commit()
             return
 
@@ -47,7 +69,7 @@ def seed_demo() -> None:
                     started_at=now - timedelta(hours=10),
                     peak_temp_c=455.0,
                     charcoal_grade="A",
-                    notes="峰值已过，可出炭",
+                    notes="峰值已过，可出炭（办证前的旧班次）",
                 ),
                 BurnShift(
                     clamp=c2,
@@ -62,6 +84,31 @@ def seed_demo() -> None:
                     peak_temp_c=520.0,
                     charcoal_grade="A+",
                     notes="已出炭班次",
+                ),
+            ]
+        )
+        session.flush()
+
+        # 窑膛容积证种子：
+        # 坞东-甲（c1）故意无证——演示“先办证”；
+        # 坞东-乙（c2）温度上限写成 390℃——演示超上限；
+        # 河沿-丙（c3）持现行有效证。
+        today = now.date()
+        session.add_all(
+            [
+                VolumeCertificate(
+                    clamp=c2,
+                    volume_m3=6.0,
+                    temp_limit_c=390.0,
+                    effective_date=today,
+                    issued_by="admin",
+                ),
+                VolumeCertificate(
+                    clamp=c3,
+                    volume_m3=20.0,
+                    temp_limit_c=600.0,
+                    effective_date=today,
+                    issued_by="admin",
                 ),
             ]
         )

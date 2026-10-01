@@ -1,0 +1,36 @@
+<aside class="drawer" role="dialog" aria-label="保存班次峰值">
+  <header class="drawer-head">
+    <h2>保存班次峰值</h2>
+    <button type="button" class="icon-close" onclick="closeDrawer()" aria-label="关闭">×</button>
+  </header>
+  <form class="drawer-body" method="post" action="/shifts/{{ shift.id }}/peak">
+    <p class="drawer-lead">
+      {{ shift.clamp.code }} ·
+      开始于 {{ shift.started_at.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+
+    {% if cert %}
+    <p class="hint cert-info">
+      现行容积证：{{ '%.0f'|format(cert.volume_m3) }} 立方米，峰值温度上限
+      <strong>{{ '%.0f'|format(cert.temp_limit_c) }}℃</strong>
+    </p>
+    {% else %}
+    <p class="hint warn">{{ no_cert_msg }}</p>
+    {% endif %}
+
+    <label>峰值温度 ℃（可空）
+      <input
+        name="peak_temp_c"
+        type="number"
+        step="0.1"
+        {% if cert %}max="{{ cert.temp_limit_c }}"{% endif %}
+        value="{% if shift.peak_temp_c is not none %}{{ shift.peak_temp_c }}{% endif %}"
+      />
+    </label>
+    <p class="hint">保存与登记共用同一条校验：无证拒绝，填写峰值不得超证面上限；出炭仍须峰值 ≥ 400℃，无旁路。</p>
+    <div class="actions">
+      <button type="submit" {% if not cert %}disabled{% endif %}>保存峰值</button>
+      <button type="button" class="btn ghost" onclick="closeDrawer()">取消</button>
+    </div>
+  </form>
+</aside>

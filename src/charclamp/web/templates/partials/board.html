@@ -36,6 +36,10 @@
     <span class="kiln-meta">
       <strong>{{ clamp.code }}</strong>
       <em>{{ status_labels.get(clamp.status, clamp.status) }} · {{ clamp.wood_species or '—' }}</em>
+      {% set limit = active_limits.get(clamp.id) %}
+      <em class="kiln-limit {% if limit is none %}is-no-cert{% endif %}">
+        {% if limit is not none %}现行上限 {{ '%.0f'|format(limit) }}℃{% else %}无证 · 请先办证{% endif %}
+      </em>
     </span>
   </a>
   {% endfor %}

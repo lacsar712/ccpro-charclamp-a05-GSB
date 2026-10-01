@@ -12,6 +12,16 @@
     <p class="hint">{{ clamp.notes }}</p>
     {% endif %}
 
+    {% if active_cert %}
+    <p class="hint cert-info">
+      现行窑膛容积证：{{ '%.0f'|format(active_cert.volume_m3) }} 立方米 ·
+      峰值上限 <strong>{{ '%.0f'|format(active_cert.temp_limit_c) }}℃</strong> ·
+      生效日 {{ active_cert.effective_date.isoformat() }} · 签发人 {{ active_cert.issued_by }}
+    </p>
+    {% else %}
+    <p class="hint warn">该窑无现行窑膛容积证：登记班次峰值将被拒绝，请先到「窑膛容积证」办证。</p>
+    {% endif %}
+
     <div class="drawer-actions-stack">
       <button
         type="button"

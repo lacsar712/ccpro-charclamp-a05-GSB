@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}窑膛容积证{% endblock %}
+{% block site_label %}{{ site_name }}{% endblock %}
+{% block top_actions %}
+<a class="btn ghost" href="/">返回时间轴</a>
+{% endblock %}
+
+{% block content %}
+<section class="cert-page">
+  <header class="timeline-head">
+    <div>
+      <h1>窑膛容积证</h1>
+      <p>每座炭窑须有现行窑膛容积证；班次峰值不得超过证面立方米对应的温度上限。操作工可办证，作废仅管理员可操作。</p>
+    </div>
+  </header>
+
+  <section class="cert-explain" aria-label="规则说明">
+    <h2>规则说明</h2>
+    <ul>
+      <li><strong>无证：</strong>该窑没有未作废容积证时，登记班次或保存峰值都会被拒绝，提示「请先办证」，不能旁路。</li>
+      <li><strong>超上限：</strong>峰值温度一旦填写，不得高于该窑现行证面的温度上限；超限的班次峰值写不进去。</li>
+      <li><strong>同窑一证：</strong>同一炭窑未作废证最多一张；两人并发争抢也只落一张，被挡者不影响时间轴与本页访问。</li>
+      <li><strong>出炭门槛：</strong>除证面约束外，标记已出炭仍要求最近班次峰值 ≥ 400℃。</li>
+    </ul>
+  </section>
+
+  <div class="cert-grid">
+    <section class="cert-panel">
+      <h2>新建容积证</h2>
+      <form method="post" action="/certificates/new" class="cert-form">
+        <label>炭窑
+          <select name="clamp_id" required>
+            {% for clamp in clamps %}
+            <option value="{{ clamp.id }}">
+              {{ clamp.code }}{% if cert_by_clamp.get(clamp.id) %}（已有现行证，提交将被挡下）{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>窑膛容积（立方米，须为正）
+          <input name="volume_m3" type="number" step="0.1" min="0.1" required />
+        </label>
+        <label>温度上限（摄氏，须为正）
+          <input name="temp_limit_c" type="number" step="0.1" min="0.1" required />
+        </label>
+        <label>生效日
+          <input name="effective_date" type="date" />
+        </label>
+        <p class="hint">以当前登录人作为签发人（{{ user.username }}）。</p>
+        <div class="actions">
+          <button type="submit">签发容积证</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="cert-panel">
+      <h2>证件台账</h2>
+      <table class="cert-table">
+        <thead>
+          <tr>
+            <th>炭窑</th><th>容积 m³</th><th>温度上限 ℃</th><th>生效日</th><th>签发人</th><th>状态</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cert in certs %}
+          <tr class="{% if cert.is_active %}is-active{% else %}is-revoked{% endif %}">
+            <td>{{ cert.clamp.code }}</td>
+            <td>{{ '%.0f'|format(cert.volume_m3) }}</td>
+            <td>{{ '%.0f'|format(cert.temp_limit_c) }}</td>
+            <td>{{ cert.effective_date.isoformat() }}</td>
+            <td>{{ cert.issued_by }}</td>
+            <td>
+              {% if cert.is_active %}
+              <span class="cert-state">现行</span>
+              {% else %}
+              <span class="cert-state revoked">已于 {{ cert.revoked_at.strftime('%Y-%m-%d %H:%M') }} 作废</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if cert.is_active and is_admin %}
+              <form method="post" action="/certificates/{{ cert.id }}/revoke"
+                    onsubmit="return confirm('确定作废该容积证？作废后不再约束班次峰值。');">
+                <button type="submit" class="btn ghost btn-sm">作废</button>
+              </form>
+              {% elif cert.is_active and not is_admin %}
+              <span class="hint">仅管理员可作废</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="cert-empty">尚无容积证，请先为炭窑办证。</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</section>
+{% endblock %}
