@@ -8,8 +8,47 @@
       {{ clamp.site.name }} · {{ clamp.wood_species or '材种未填' }}
       · 当前 <span class="badge badge-{{ clamp.status }}">{{ status_labels.get(clamp.status, clamp.status) }}</span>
     </p>
+
+    <div class="cert-card {% if not active_cert %}is-missing{% endif %}">
+      {% if active_cert %}
+      <p class="cert-card-title">现行窑膛容积证</p>
+      <dl class="cert-grid">
+        <div><dt>容积</dt><dd>{{ '%g'|format(active_cert.volume_m3) }} m³</dd></div>
+        <div><dt>温度上限</dt><dd><strong>{{ '%g'|format(active_cert.temp_limit_c) }} ℃</strong></dd></div>
+        <div><dt>生效日</dt><dd>{{ active_cert.effective_date.strftime('%Y-%m-%d') }}</dd></div>
+        <div><dt>签发人</dt><dd>{{ active_cert.issued_by }}</dd></div>
+      </dl>
+      {% else %}
+      <p class="cert-card-title warn">无现行容积证</p>
+      <p class="hint">该窑没有未作废容积证，不能登记或保存班次峰值。请先到「容积证」页办证。</p>
+      {% endif %}
+    </div>
+
     {% if clamp.notes %}
     <p class="hint">{{ clamp.notes }}</p>
+    {% endif %}
+
+    {% if latest_shift %}
+    <form class="peak-save" method="post" action="/shifts/{{ latest_shift.id }}/peak">
+      <label>改写最近班次峰值 ℃
+        <input
+          name="peak_temp_c"
+          type="number"
+          step="0.1"
+          {% if active_cert %}max="{{ '%g'|format(active_cert.temp_limit_c) }}"{% endif %}
+          value="{% if latest_shift.peak_temp_c is not none %}{{ '%g'|format(latest_shift.peak_temp_c) }}{% endif %}"
+        />
+      </label>
+      <button type="submit" class="btn ghost btn-small" {% if not active_cert %}disabled{% endif %}>保存峰值</button>
+      <p class="hint">
+        {% if active_cert %}
+        保存即按现行证校验：不得超过 {{ '%g'|format(active_cert.temp_limit_c) }}℃；
+        出炭仍要求峰值 ≥ 400℃。
+        {% else %}
+        无证状态下保存接口同样拒绝写入，无法旁路。
+        {% endif %}
+      </p>
+    </form>
     {% endif %}
 
     <div class="drawer-actions-stack">

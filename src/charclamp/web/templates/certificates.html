@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}窑膛容积证{% endblock %}
+{% block content %}
+<section class="cert-layout">
+  <div class="cert-main">
+    <header class="timeline-head">
+      <div>
+        <h1>窑膛容积证</h1>
+        <p>
+          每座炭窑须有现行（未作废）容积证。登记或改写班次峰值时以证面温度上限为准；
+          无证窑不能登记峰值，填写的峰值不得超过上限。同一窑未作废证最多一张。
+        </p>
+      </div>
+      <span class="badge badge-burning">现行证 {{ active_count }} 张</span>
+    </header>
+
+    <table class="cert-table">
+      <thead>
+        <tr>
+          <th>炭窑</th>
+          <th>容积 m³</th>
+          <th>温度上限 ℃</th>
+          <th>生效日</th>
+          <th>签发人</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cert in certs %}
+        <tr class="{% if cert.revoked_at %}is-revoked{% else %}is-active{% endif %}">
+          <td>
+            <button
+              type="button"
+              class="clamp-badge"
+              hx-get="/drawer/clamp/{{ cert.clamp.id }}"
+              hx-target="#drawer-root"
+              hx-swap="innerHTML"
+            >{{ cert.clamp.code }}</button>
+          </td>
+          <td class="num">{{ '%g'|format(cert.volume_m3) }}</td>
+          <td class="num"><strong>{{ '%g'|format(cert.temp_limit_c) }}</strong></td>
+          <td>{{ cert.effective_date.strftime('%Y-%m-%d') }}</td>
+          <td>{{ cert.issued_by }}</td>
+          <td>
+            {% if cert.revoked_at %}
+            <span class="badge badge-drawn">已作废</span>
+            <em class="revoked-at">作废于 {{ cert.revoked_at.strftime('%Y-%m-%d %H:%M') }}</em>
+            {% else %}
+            <span class="badge badge-burning">现行</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not cert.revoked_at %}
+              {% if user.role == 'admin' %}
+              <form method="post" action="/certificates/{{ cert.id }}/revoke"
+                    onsubmit="return confirm('确定作废该窑的现行容积证？作废后可重新办证。');">
+                <button type="submit" class="btn btn-small btn-danger">作废</button>
+              </form>
+              {% else %}
+              <span class="hint">仅管理员可作废</span>
+              {% endif %}
+            {% else %}
+            <span class="hint">不再约束</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="timeline-empty">尚无容积证，请在右侧为炭窑办证。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <aside class="cert-side">
+    <h2>新建容积证</h2>
+    <p class="hint">操作工即可办证；同一窑已有现行证时不能重复签发。</p>
+    <form method="post" action="/certificates/new" class="cert-form">
+      <label>炭窑
+        <select name="clamp_id" required>
+          {% for clamp in clamps %}
+          {% set existing = cert_by_clamp.get(clamp.id) %}
+          <option value="{{ clamp.id }}">
+            {{ clamp.code }}{% if existing %}（已有现行证，上限 {{ '%g'|format(existing.temp_limit_c) }}℃）{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>窑膛容积 m³（正数）
+        <input name="volume_m3" type="number" step="0.1" min="0.1" required />
+      </label>
+      <label>温度上限 ℃（正数）
+        <input name="temp_limit_c" type="number" step="0.1" min="0.1" required />
+      </label>
+      <label>生效日
+        <input name="effective_date" type="date" value="{{ today }}" required />
+      </label>
+      <label>签发人
+        <input name="issued_by" value="{{ user.username }}" maxlength="64" required />
+      </label>
+      <button type="submit">签发容积证</button>
+    </form>
+    <p class="hint warn">
+      说明：① 无证窑在时间轴登记/保存班次峰值会被拒绝，须先办证；
+      ② 峰值填写后若超过证面温度上限同样被拒绝（如上限 390℃ 时不得填 391℃ 及以上）。
+    </p>
+  </aside>
+</section>
+{% endblock %}

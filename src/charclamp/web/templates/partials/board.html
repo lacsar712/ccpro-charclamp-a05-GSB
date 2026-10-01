@@ -35,7 +35,12 @@
     </span>
     <span class="kiln-meta">
       <strong>{{ clamp.code }}</strong>
-      <em>{{ status_labels.get(clamp.status, clamp.status) }} · {{ clamp.wood_species or '—' }}</em>
+      {% set cert = cert_by_clamp.get(clamp.id) %}
+      {% if cert %}
+      <em>{{ status_labels.get(clamp.status, clamp.status) }} · 上限 {{ '%g'|format(cert.temp_limit_c) }}℃</em>
+      {% else %}
+      <em class="cert-missing">{{ status_labels.get(clamp.status, clamp.status) }} · 无证</em>
+      {% endif %}
     </span>
   </a>
   {% endfor %}

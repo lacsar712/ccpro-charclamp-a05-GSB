@@ -17,6 +17,10 @@
           <small>{% block site_label %}乌石岗焖烧坞{% endblock %}</small>
         </div>
       </div>
+      <nav class="topnav" aria-label="主导航">
+        <a href="/" class="topnav-link">时间轴</a>
+        <a href="/certificates" class="topnav-link">容积证</a>
+      </nav>
       <div class="topbar-actions">
         {% block top_actions %}{% endblock %}
         {% if user %}
@@ -38,15 +42,40 @@
   <div
     id="drawer-backdrop"
     class="drawer-backdrop"
-    hx-on:click="document.getElementById('drawer-root').innerHTML=''; this.classList.remove('open')"
+    hx-on:click="closeDrawer()"
   ></div>
   <script>
     document.body.addEventListener('htmx:afterSwap', function (evt) {
       if (evt.detail.target && evt.detail.target.id === 'drawer-root') {
         document.getElementById('drawer-backdrop').classList.add('open');
         document.getElementById('drawer-root').classList.add('open');
+        initShiftCertHint();
       }
     });
+    function initShiftCertHint() {
+      var sel = document.getElementById('shift-clamp-select');
+      if (!sel) { return; }
+      var hint = document.getElementById('shift-cert-hint');
+      var peak = document.getElementById('shift-peak-input');
+      var btn = document.getElementById('shift-submit-btn');
+      function refresh() {
+        var opt = sel.options[sel.selectedIndex];
+        if (!opt) { return; }
+        if (opt.dataset.hasCert === '1') {
+          hint.className = 'hint';
+          hint.textContent = '现行证温度上限 ' + opt.dataset.tempLimit + '℃，峰值可留空，填写则不得超过该上限。';
+          if (peak) { peak.max = opt.dataset.tempLimit; }
+          btn.disabled = false;
+        } else {
+          hint.className = 'hint warn';
+          hint.textContent = '该炭窑尚无现行窑膛容积证，请先到「容积证」页办证；无证不能登记班次。';
+          if (peak) { peak.removeAttribute('max'); }
+          btn.disabled = true;
+        }
+      }
+      sel.addEventListener('change', refresh);
+      refresh();
+    }
     function closeDrawer() {
       document.getElementById('drawer-root').innerHTML = '';
       document.getElementById('drawer-root').classList.remove('open');

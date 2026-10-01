@@ -462,3 +462,122 @@ input, select, textarea {
   .timeline-head { flex-direction: column; align-items: stretch; }
   .kiln-chip { min-width: 132px; }
 }
+
+/* —— top nav —— */
+.topnav {
+  display: flex;
+  gap: 6px;
+  margin-left: 24px;
+  margin-right: auto;
+}
+
+.topnav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.topnav-link:hover { color: var(--ink); border-color: var(--line); }
+
+/* —— certificates page —— */
+.cert-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.92rem;
+}
+
+.cert-table th,
+.cert-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.cert-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: #15120f;
+}
+
+.cert-table td.num { font-variant-numeric: tabular-nums; }
+
+.cert-table tr.is-revoked td { opacity: 0.55; }
+.cert-table tr:last-child td { border-bottom: none; }
+
+.revoked-at { display: block; font-style: normal; font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+.cert-side {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  position: sticky;
+  top: 16px;
+}
+
+.cert-side h2 { margin: 0; font-size: 1.1rem; }
+
+.cert-form { display: grid; gap: 12px; }
+
+.btn-small { padding: 6px 12px; font-size: 0.85rem; }
+.btn-danger { background: #7f1d1d; }
+.btn-danger:hover { background: #991b1b; }
+
+em.cert-missing, .cert-missing { color: #fca5a5; }
+
+/* —— cert card inside drawer —— */
+.cert-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #14110d;
+  display: grid;
+  gap: 8px;
+}
+
+.cert-card.is-missing { border-color: #7f1d1d; background: #1c100e; }
+.cert-card-title { margin: 0; font-weight: 700; font-size: 0.95rem; }
+
+.cert-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.cert-grid dt { color: var(--muted); font-size: 0.75rem; }
+.cert-grid dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+
+.peak-save {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.peak-save button { justify-self: start; }
+
+@media (max-width: 860px) {
+  .cert-layout { grid-template-columns: 1fr; }
+  .cert-side { position: static; }
+}
+

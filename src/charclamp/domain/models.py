@@ -1,9 +1,20 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql import text
 
 
 def utcnow() -> datetime:
@@ -54,6 +65,10 @@ class Clamp(Base):
         back_populates="clamp",
         cascade="all, delete-orphan",
     )
+    certificates: Mapped[list[VolumeCertificate]] = relationship(
+        back_populates="clamp",
+        cascade="all, delete-orphan",
+    )
 
 
 class BurnShift(Base):
@@ -67,3 +82,28 @@ class BurnShift(Base):
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
     clamp: Mapped[Clamp] = relationship(back_populates="shifts")
+
+
+class VolumeCertificate(Base):
+    """窑膛容积证：同一炭窑最多一张未作废证（revoked_at 为空）。"""
+
+    __tablename__ = "volume_certificates"
+    __table_args__ = (
+        Index(
+            "uq_active_cert_per_clamp",
+            "clamp_id",
+            unique=True,
+            postgresql_where=text("revoked_at IS NULL"),
+            sqlite_where=text("revoked_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clamp_id: Mapped[int] = mapped_column(ForeignKey("clamps.id"), nullable=False)
+    volume_m3: Mapped[float] = mapped_column(Float, nullable=False)
+    temp_limit_c: Mapped[float] = mapped_column(Float, nullable=False)
+    effective_date: Mapped[date] = mapped_column(Date, nullable=False, default=lambda: utcnow().date())
+    issued_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    clamp: Mapped[Clamp] = relationship(back_populates="certificates")

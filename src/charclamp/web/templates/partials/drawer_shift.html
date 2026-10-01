@@ -3,19 +3,26 @@
     <h2>登记焖烧班次</h2>
     <button type="button" class="icon-close" onclick="closeDrawer()" aria-label="关闭">×</button>
   </header>
-  <form class="drawer-body" method="post" action="/shifts/new">
+  <form class="drawer-body" method="post" action="/shifts/new" id="shift-new-form">
     <label>炭窑
-      <select name="clamp_id" required>
+      <select name="clamp_id" id="shift-clamp-select" required>
         {% for clamp in clamps %}
-        <option value="{{ clamp.id }}" {% if preselect_clamp_id == clamp.id %}selected{% endif %}>{{ clamp.code }}</option>
+        {% set cert = cert_by_clamp.get(clamp.id) %}
+        <option
+          value="{{ clamp.id }}"
+          {% if preselect_clamp_id == clamp.id %}selected{% endif %}
+          data-has-cert="{{ '1' if cert else '0' }}"
+          data-temp-limit="{% if cert %}{{ '%g'|format(cert.temp_limit_c) }}{% endif %}"
+        >{{ clamp.code }}</option>
         {% endfor %}
       </select>
     </label>
+    <p class="hint" id="shift-cert-hint"></p>
     <label>开始时间
       <input name="started_at" type="datetime-local" />
     </label>
     <label>峰值温度 ℃（可空）
-      <input name="peak_temp_c" type="number" step="0.1" />
+      <input name="peak_temp_c" type="number" step="0.1" id="shift-peak-input" />
     </label>
     <label>炭品等级
       <input name="charcoal_grade" value="B" />
@@ -23,9 +30,12 @@
     <label>备注
       <textarea name="notes" rows="3"></textarea>
     </label>
-    <p class="hint">出炭要求最近班次峰值 ≥ 400℃；本表只登记班次。</p>
+    <p class="hint">
+      该窑须有现行容积证；峰值填写后不得超过证面温度上限。
+      已出炭门槛仍要求最近班次峰值 ≥ 400℃，不因证件而放宽。
+    </p>
     <div class="actions">
-      <button type="submit">写入时间轴</button>
+      <button type="submit" id="shift-submit-btn">写入时间轴</button>
       <button type="button" class="btn ghost" onclick="closeDrawer()">取消</button>
     </div>
   </form>

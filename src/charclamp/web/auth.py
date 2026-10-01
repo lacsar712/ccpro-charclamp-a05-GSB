@@ -23,5 +23,7 @@ session_auth = SessionAuth[User, ServerSideSessionBackend](
     session_backend_config=ServerSideSessionConfig(
         session_id_bytes=32,
     ),
-    exclude=["/", "/login", "/logout", "/static", "/schema", "/favicon.ico"],
+    # 必须锚定：裸 "/" 配合 findall 会命中所有路径，等于关闭认证中间件（request.user 500）。
+    # "/" 本身不排除：未登录访问由 NotAuthorized 异常处理器跳转登录页。
+    exclude=[r"^/login$", r"^/logout$", r"^/static", r"^/schema", r"^/favicon\.ico$"],
 )
